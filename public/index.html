@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Infographic Screenshot</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      max-width: 800px;
+    }
+    .infographic {
+      border: 1px solid #ccc;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px; /* spacing between buttons */
+    }
+    input[type="text"] {
+      width: 80%;
+      padding: 8px;
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="infographic" id="infographic">
+    <h1>Sample Infographic Title</h1>
+    <p>This is a sample infographic description to demonstrate screenshot functionality.</p>
+    <ul>
+      <li>Point one with some stats</li>
+      <li>Point two with some insights</li>
+      <li>Point three highlighting key info</li>
+    </ul>
+  </div>
+
+  <div>
+    <label for="url-input">Or enter a URL to screenshot:</label><br />
+    <input type="text" id="url-input" placeholder="https://example.com/your-infographic" />
+  </div>
+
+  <button id="screenshot-btn">Take Screenshot</button>
+  <button id="show-info-btn">Show Extracted Info</button>
+
+  <script>
+    let lastScreenshotFileName = null;
+
+    document.getElementById('screenshot-btn').addEventListener('click', async () => {
+      let url = document.getElementById('url-input').value.trim();
+      if (!url) {
+        url = window.location.href;
+      }
+      try {
+        const response = await fetch('/api/screenshot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+
+        if (!response.ok) {
+          alert('Failed to take screenshot.');
+          return;
+        }
+
+        const data = await response.json();
+        lastScreenshotFileName = data.fileName;
+
+        alert('Screenshot saved on server as: ' + lastScreenshotFileName);
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+
+    document.getElementById('show-info-btn').addEventListener('click', async () => {
+      if (!lastScreenshotFileName) {
+        alert('Please take a screenshot first.');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/extract-infographic', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fileName: lastScreenshotFileName }),
+        });
+
+        if (!response.ok) {
+          alert('Failed to extract infographic.');
+          return;
+        }
+
+        const html = await response.text();
+
+        const newTab = window.open();
+        newTab.document.write(html);
+        newTab.document.close();
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    });
+  </script>
+</body>
+</html>
